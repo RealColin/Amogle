@@ -1,5 +1,5 @@
 import Text.Read (readMaybe)
-import Data.Char (isLower, isUpper, isAlpha, isAlphaNum)
+import Data.Char (isLower, isUpper, isAlpha, isAlphaNum, isNumber)
 import Data.Foldable (traverse_)
 
 data Token =
@@ -27,10 +27,12 @@ tokenize (' ':s) = tokenize s
 tokenize ('\t':s) = TokenIndent : tokenize s
 tokenize ('\n':s) = TokenNL : tokenize s
 tokenize ('-':'>':s) = TokenArrow : tokenize s
-tokenize (c:s)
-  | isAlpha c = getToken chunk : tokenize rest
-  | otherwise = getToken [c] : tokenize s
-    where (chunk, rest) = takeChunk (c:s)
+tokenize (c:s) = getToken chunk : tokenize rest
+  where
+    (chunk, rest)
+      | isAlpha c = takeChunk (c:s)
+      | isNumber c = takeNumChunk (c:s)
+      | otherwise = ([c], s)
 
 takeChunk :: String -> (String, String)
 takeChunk [] = ([], [])
@@ -38,7 +40,14 @@ takeChunk (c:s)
   | isAlphaNum c = (c:chunk, rest)
   | otherwise = ([], c:s)
     where (chunk, rest) = takeChunk s
-    
+
+takeNumChunk :: String -> (String, String)
+takeNumChunk [] = ([], [])
+takeNumChunk (c:s)
+  | isNumber c = (c:chunk, rest)
+  | c == '.' = (c:chunk, rest)
+  | otherwise = ([], c:s)
+    where (chunk, rest) = takeNumChunk s    
 
 getToken :: String -> Token
 getToken "let" = TokenLet
@@ -58,4 +67,4 @@ getToken str
     where c = head str
 
 main :: IO ()
-main = traverse_ (print . tokenize) ["f: Int -> Int\nlet f(x) = x + 2"]  
+main = traverse_ (print . tokenize) ["let f = 32.4", "let g = 24", "let h = 0.1234"]  
