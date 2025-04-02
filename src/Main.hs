@@ -9,6 +9,7 @@ data Token =
   | TokenEquals
   | TokenPlus
   | TokenMinus
+  | TokenColon
   | TokenInt Int
   | TokenDouble Double
   | TokenNL
@@ -39,6 +40,7 @@ getToken "let" = TokenLet
 getToken "=" = TokenEquals
 getToken "+" = TokenPlus
 getToken "-" = TokenMinus
+getToken ":" = TokenColon
 getToken str
   | Just n <- readMaybe str :: Maybe Int = TokenInt n
   | Just d <- readMaybe str :: Maybe Double = TokenDouble d
@@ -48,4 +50,4 @@ getToken str
     where c = head str
 
 main :: IO ()
-main = traverse_ (print . tokenize) ["let x3 = 1", "let x 3 = 1", "Joe joe", "let x=3", "let y = 1+2"]  
+main = traverse_ (print . tokenize) ["let x3 = 1", "let x 3 = 1", "Joe joe", "let x=3", "let y = 1+2", "f: Int\nlet f = 3"]  
