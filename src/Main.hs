@@ -1,5 +1,6 @@
 import Text.Read (readMaybe)
-import Data.Char (isLower, isUpper, isAlpha)
+import Data.Char (isLower, isUpper, isAlpha, isAlphaNum)
+import Data.Foldable (traverse_)
 
 data Token =
   TokenLet
@@ -10,6 +11,7 @@ data Token =
   | TokenDouble Double
   | TokenNL
   | TokenIndent
+  | TokenUnknown
   deriving (Show, Eq)
 
 tokenize :: String -> [Token]
@@ -19,14 +21,14 @@ tokenize ('\t':s) = TokenIndent : tokenize s
 tokenize ('\n':s) = TokenNL : tokenize s
 tokenize (c:s)
   | isAlpha c = getToken chunk : tokenize rest
-  | otherwise = TokenLet : tokenize s
+  | otherwise = getToken [c] : tokenize s
     where (chunk, rest) = takeChunk (c:s)
 
 takeChunk :: String -> (String, String)
 takeChunk [] = ([], [])
 takeChunk (c:s)
-  | isAlpha c = (c:chunk, rest)
-  | otherwise = ([], s)
+  | isAlphaNum c = (c:chunk, rest)
+  | otherwise = ([], c:s)
     where (chunk, rest) = takeChunk s
     
 
@@ -36,14 +38,10 @@ getToken "=" = TokenEquals
 getToken str
   | Just n <- readMaybe str :: Maybe Int = TokenInt n
   | Just d <- readMaybe str :: Maybe Double = TokenDouble d
-  | otherwise = TokenValIdent str
+  | isUpper c = TokenTypeIdent str
+  | isLower c = TokenValIdent str
+  | otherwise = TokenUnknown
+    where c = head str
 
 main :: IO ()
-main = do
-  let x = tokenize "let x = 3"
-  print x
-  let y = tokenize "let y = 3\nlet z = 4"
-  print y
-  let z = tokenize "letz = 3"
-  print z
-  
+main = traverse_ (print . tokenize) ["let x3 = 1", "let x 3 = 1", "Joe joe"]  
