@@ -1,4 +1,4 @@
-module Lexer (tokenize) where
+module Lexer (tokenize, Token(..)) where
 
 import Text.Read (readMaybe)
 import Data.Char (isLower, isUpper, isAlpha, isAlphaNum, isNumber)
