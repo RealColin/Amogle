@@ -10,6 +10,10 @@ data Token =
   | TokenPlus
   | TokenMinus
   | TokenColon
+  | TokenComma
+  | TokenParenL
+  | TokenParenR
+  | TokenArrow
   | TokenInt Int
   | TokenDouble Double
   | TokenNL
@@ -22,6 +26,7 @@ tokenize [] = []
 tokenize (' ':s) = tokenize s
 tokenize ('\t':s) = TokenIndent : tokenize s
 tokenize ('\n':s) = TokenNL : tokenize s
+tokenize ('-':'>':s) = TokenArrow : tokenize s
 tokenize (c:s)
   | isAlpha c = getToken chunk : tokenize rest
   | otherwise = getToken [c] : tokenize s
@@ -41,6 +46,9 @@ getToken "=" = TokenEquals
 getToken "+" = TokenPlus
 getToken "-" = TokenMinus
 getToken ":" = TokenColon
+getToken "," = TokenComma
+getToken "(" = TokenParenL
+getToken ")" = TokenParenR
 getToken str
   | Just n <- readMaybe str :: Maybe Int = TokenInt n
   | Just d <- readMaybe str :: Maybe Double = TokenDouble d
@@ -50,4 +58,4 @@ getToken str
     where c = head str
 
 main :: IO ()
-main = traverse_ (print . tokenize) ["let x3 = 1", "let x 3 = 1", "Joe joe", "let x=3", "let y = 1+2", "f: Int\nlet f = 3"]  
+main = traverse_ (print . tokenize) ["f: Int -> Int\nlet f(x) = x + 2"]  
