@@ -31,21 +31,25 @@ instance Monad Parser where
       Nothing -> Nothing
       Just (x, rest) -> runParser (fapb x) rest)
 
-type ValIdent = String
-type TypeIdent = String
+type Params = [String] -- empty means plain old value, nonempty means function!
+type ValName = String -- this has to start with a LOWERCASE letter
 
-data ExprNode =
-  BinOp
-  | NumLit
-  | Ident
-
-data AmglNode =
-  ExprNode
-  | DefNode ValIdent [ValIdent] 
-  | DeclNode ValIdent [TypeIdent] TypeIdent -- name,
+data Expr
+  = IntLit Int
+  | DoubleLit Double
+  | Add Expr Expr
+  | Sub Expr Expr
+  | ValDef ValName Params Expr
+  deriving (Show, Eq)
 
 -- parser functions!
 
+parseLExpr :: Parser Expr
+parseLExpr = Parser (\input -> Just (IntLit 3, input)) -- placeholder
 
-parse :: [Token] -> Int
-parse tokens = 0
+parseRExpr :: Parser Expr
+parseRExpr = Parser (\input -> Just (IntLit 4, input)) -- placeholder
+
+
+parse :: [Token] -> Maybe Expr
+parse tokens = Just (IntLit 3)
