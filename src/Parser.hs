@@ -39,17 +39,20 @@ data Expr
   | DoubleLit Double
   | Add Expr Expr
   | Sub Expr Expr
-  | ValDef ValName Params Expr
   deriving (Show, Eq)
+
+data Decl
+  = ValDef ValName Params Expr
+  | Empty
+    
 
 -- parser functions!
 
-parseLExpr :: Parser Expr
-parseLExpr = Parser (\input -> Just (IntLit 3, input)) -- placeholder
 
-parseRExpr :: Parser Expr
-parseRExpr = Parser (\input -> Just (IntLit 4, input)) -- placeholder
 
+
+parseDecl :: Parser Decl
+parseDecl = Parser (\input -> Just(Empty, input))
 
 parse :: [Token] -> Maybe Expr
 parse tokens = Just (IntLit 3)
