@@ -10,6 +10,8 @@ data Token =
   | TokenEquals
   | TokenPlus
   | TokenMinus
+  | TokenTimes
+  | TokenDivide
   | TokenColon
   | TokenComma
   | TokenParenL
@@ -55,6 +57,8 @@ getToken "let" = TokenLet
 getToken "=" = TokenEquals
 getToken "+" = TokenPlus
 getToken "-" = TokenMinus
+getToken "*" = TokenTimes
+getToken "/" = TokenDivide
 getToken ":" = TokenColon
 getToken "," = TokenComma
 getToken "(" = TokenParenL

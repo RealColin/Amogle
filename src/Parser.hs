@@ -71,6 +71,8 @@ data Expr
   | Add Expr Expr
   | Sub Expr Expr
   | Ident String
+  | Mul Expr Expr
+  | Div Expr Expr
   deriving (Show, Eq)
 
 data Decl
@@ -96,20 +98,31 @@ parsePrimary = i <|> e
     i = IntLit <$> parseInt
     e = Ident <$> parseValName
 
-parseAdd :: Parser Expr
-parseAdd = do
-  first <- parsePrimary
-  _ <- eatToken TokenPlus
-  Add first <$> parsePrimary
+parseAdd :: Parser (Expr -> Expr -> Expr)
+parseAdd = eatToken TokenPlus >> pure Add
 
-parseSub :: Parser Expr
-parseSub = do
-  first <- parsePrimary
-  _ <- eatToken TokenMinus
-  Sub first <$> parsePrimary
+parseSub :: Parser (Expr -> Expr -> Expr)
+parseSub = eatToken TokenMinus >> pure Sub
+
+parseMul :: Parser (Expr -> Expr -> Expr)
+parseMul = eatToken TokenTimes >> pure Mul
+
+parseDiv :: Parser (Expr -> Expr -> Expr)
+parseDiv = eatToken TokenDivide >> pure Div
+
+parseBottomLevel :: Parser Expr
+parseBottomLevel = parsePrimary
+
+parseMidLevel :: Parser Expr
+parseMidLevel = parseBottomLevel <.> (parseMul <|> parseDiv)
+
+parseTopLevel :: Parser Expr
+parseTopLevel = parseMidLevel <.> (parseAdd <|> parseSub)
 
 parseExpr :: Parser Expr
-parseExpr = parseAdd <|> parseSub
+-- parseExpr = (parseBottomLevel <.> (parseMul <|> parseDiv)) <.> (parseAdd <|> parseSub)
+-- parseExpr = (<.>) parseBottomLevel $ parseMul <|> parseDiv
+parseExpr = parseTopLevel
 
 -- Declaration Parsing Functions
     
