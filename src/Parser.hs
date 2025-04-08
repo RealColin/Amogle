@@ -4,11 +4,11 @@ module Parser (parse) where
 
 import Lexer (Token(..))
 
+-- Defining the Parser
+
 newtype Parser a = Parser {
   runParser :: [Token] -> Maybe (a, [Token])
 }
-
--- kinda understand these!
 
 instance Functor Parser where
   fmap f p = Parser (\input ->
@@ -33,6 +33,35 @@ instance Monad Parser where
       Nothing -> Nothing
       Just (x, rest) -> runParser (fapb x) rest)
 
+-- Basic Parser Functions
+
+satisfyToken :: (Token -> Bool) -> Parser Token
+satisfyToken fn = Parser $ \case
+  (t:rest) | fn t -> Just (t, rest)
+  _ -> Nothing
+
+eatToken :: Token -> Parser Token
+eatToken t = satisfyToken (== t)
+
+(<|>) :: Parser a -> Parser a -> Parser a
+p1 <|> p2 = Parser $ \input ->
+  case runParser p1 input of
+    Nothing -> runParser p2 input
+    res -> res
+
+(<.>) :: Parser a -> Parser (a -> a -> a) -> Parser a
+p <.> op = do
+  x <- p
+  rest x
+  where
+    rest acc = (do
+      f <- op
+      y <- p
+      rest (f acc y))
+      <|> return acc
+
+-- Defining AST types     
+
 -- type Params = [String] -- empty means plain old value, nonempty means function!
 type ValName = String -- this has to start with a LOWERCASE letter
 
@@ -48,22 +77,8 @@ data Decl
   = ValDef ValName Expr
   | Empty
   deriving (Show, Eq)
-    
 
--- parser functions!
-satisfyToken :: (Token -> Bool) -> Parser Token
-satisfyToken fn = Parser $ \case
-  (t:rest) | fn t -> Just (t, rest)
-  _ -> Nothing
-
-eatToken :: Token -> Parser Token
-eatToken t = satisfyToken (== t)
-
-(<|>) :: Parser a -> Parser a -> Parser a
-p1 <|> p2 = Parser $ \input ->
-  case runParser p1 input of
-    Nothing -> runParser p2 input
-    res -> res
+-- Expression Parsing Functions
 
 parseValName :: Parser String
 parseValName = Parser $ \case
@@ -96,6 +111,8 @@ parseSub = do
 parseExpr :: Parser Expr
 parseExpr = parseAdd <|> parseSub
 
+-- Declaration Parsing Functions
+    
 parseValDef :: Parser Decl
 parseValDef = do
   _ <- eatToken TokenLet
@@ -105,6 +122,8 @@ parseValDef = do
 
 parseDecl :: Parser Decl
 parseDecl = parseValDef
+
+-- Main parse function
 
 parse :: [Token] -> Maybe Decl
 parse tokens = case runParser parseDecl tokens of
