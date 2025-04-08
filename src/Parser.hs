@@ -49,6 +49,7 @@ p1 <|> p2 = Parser $ \input ->
     Nothing -> runParser p2 input
     res -> res
 
+-- chainl1 function
 (<.>) :: Parser a -> Parser (a -> a -> a) -> Parser a
 p <.> op = do
   x <- p
@@ -120,8 +121,6 @@ parseTopLevel :: Parser Expr
 parseTopLevel = parseMidLevel <.> (parseAdd <|> parseSub)
 
 parseExpr :: Parser Expr
--- parseExpr = (parseBottomLevel <.> (parseMul <|> parseDiv)) <.> (parseAdd <|> parseSub)
--- parseExpr = (<.>) parseBottomLevel $ parseMul <|> parseDiv
 parseExpr = parseTopLevel
 
 -- Declaration Parsing Functions
