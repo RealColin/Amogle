@@ -63,7 +63,7 @@ p <.> op = do
 
 -- Defining AST types     
 
--- type Params = [String] -- empty means plain old value, nonempty means function!
+type Params = [String] -- empty means plain old value, nonempty means function!
 type ValName = String -- this has to start with a LOWERCASE letter
 
 data Expr
@@ -77,7 +77,7 @@ data Expr
   deriving (Show, Eq)
 
 data Decl
-  = ValDef ValName Expr
+  = ValDef ValName Params Expr
   | Empty
   deriving (Show, Eq)
 
@@ -93,6 +93,16 @@ parseInt = Parser $ \case
     (TokenInt t:rest) -> Just (t, rest)
     _ -> Nothing
 
+parseParams :: Parser Params
+parseParams = do
+  parseParen <|> pure []
+    where
+      parseParen = do
+        _ <- eatToken TokenParenL
+        param <- parseValName
+        _ <- eatToken TokenParenR
+        pure [param]
+  
 parseAdd :: Parser (Expr -> Expr -> Expr)
 parseAdd = eatToken TokenPlus >> pure Add
 
@@ -126,8 +136,9 @@ parseValDef :: Parser Decl
 parseValDef = do
   _ <- eatToken TokenLet
   name <- parseValName
+  params <- parseParams
   _ <- eatToken TokenEquals
-  ValDef name <$> parseExpr
+  ValDef name params <$> parseExpr
 
 parseDecl :: Parser Decl
 parseDecl = parseValDef
