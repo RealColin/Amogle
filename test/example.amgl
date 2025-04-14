@@ -1,4 +1,8 @@
+f: Int -> Int
 let f(x) = x + 2
 
+g: Int
+let g = 3
 
-let f(x, y) = 3 + y + y + 2
+h: Int, Int -> Int
+let h(x, y) = x + y + 2

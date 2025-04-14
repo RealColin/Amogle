@@ -85,6 +85,7 @@ p |-| sep = joe []
 
 type Params = [String] -- empty means plain old value, nonempty means function!
 type ValName = String -- this has to start with a LOWERCASE letter
+type TypeName = String
 
 data Expr
   = IntLit Int
@@ -98,6 +99,7 @@ data Expr
 
 data Decl
   = ValDef ValName Params Expr
+  | TypeSpec ValName [TypeName] TypeName
   | Empty
   deriving (Show, Eq)
 
@@ -105,13 +107,18 @@ data Decl
 
 parseValName :: Parser String
 parseValName = Parser $ \case
-    (TokenValIdent t:rest) -> Just (t, rest)
-    _ -> Nothing
+  (TokenValIdent t:rest) -> Just (t, rest)
+  _ -> Nothing
+
+parseTypeName :: Parser TypeName
+parseTypeName = Parser $ \case
+  (TokenTypeIdent t:rest) -> Just (t, rest)
+  _ -> Nothing
 
 parseInt :: Parser Int
 parseInt = Parser $ \case
-    (TokenInt t:rest) -> Just (t, rest)
-    _ -> Nothing
+  (TokenInt t:rest) -> Just (t, rest)
+  _ -> Nothing
 
 parseParams :: Parser Params
 parseParams = parseParen <|> pure []
@@ -159,8 +166,22 @@ parseValDef = do
   _ <- eatToken TokenEquals
   ValDef name params <$> parseExpr
 
+parseTypeSpec :: Parser Decl
+parseTypeSpec = first <|> second
+  where
+    first = do
+      ident <- parseValName
+      _ <- eatToken TokenColon
+      paramType <- parseTypeName |-| eatToken TokenComma
+      _ <- eatToken TokenArrow
+      TypeSpec ident paramType <$> parseTypeName
+    second = do
+      ident <- parseValName
+      _ <- eatToken TokenColon
+      TypeSpec ident [] <$> parseTypeName
+
 parseDecl :: Parser Decl
-parseDecl = parseValDef
+parseDecl = parseValDef <|> parseTypeSpec
 
 parseDecls :: Parser [Decl]
 parseDecls = parseDecl |-| some (eatToken TokenNL)
