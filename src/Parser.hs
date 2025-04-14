@@ -94,14 +94,20 @@ parseInt = Parser $ \case
     _ -> Nothing
 
 parseParams :: Parser Params
-parseParams = do
-  parseParen <|> pure []
-    where
-      parseParen = do
-        _ <- eatToken TokenParenL
-        param <- parseValName
-        _ <- eatToken TokenParenR
-        pure [param]
+parseParams = parseParen <|> pure []
+  where
+    parseParen = do
+      _ <- eatToken TokenParenL
+      params <- parseNames [] <|> pure []
+      _ <- eatToken TokenParenR
+      pure params
+
+    parseNames rest = (do
+      next <- parseValName
+      _ <- eatToken TokenComma
+      parseNames (next:rest)) <|> (do
+        next <- parseValName
+        pure $ reverse (next:rest))
   
 parseAdd :: Parser (Expr -> Expr -> Expr)
 parseAdd = eatToken TokenPlus >> pure Add
