@@ -95,6 +95,7 @@ data Expr
   | Ident String
   | Mul Expr Expr
   | Div Expr Expr
+  | Call Expr [Expr]
   deriving (Show, Eq)
 
 data Decl
@@ -141,10 +142,19 @@ parseMul = eatToken TokenTimes >> pure Mul
 parseDiv :: Parser (Expr -> Expr -> Expr)
 parseDiv = eatToken TokenDivide >> pure Div
 
+parseFuncCall :: Parser Expr
+parseFuncCall = do
+  name <- parseValName
+  _ <- eatToken TokenParenL
+  exprs <- parseExpr |-| eatToken TokenComma
+  _ <- eatToken TokenParenR
+  pure $ Call (Ident name) exprs
+
 parsePrimary :: Parser Expr
-parsePrimary = i <|> e
+parsePrimary = i <|> f <|> e
   where
     i = IntLit <$> parseInt
+    f = parseFuncCall
     e = Ident <$> parseValName
 
 parseSecondary :: Parser Expr
@@ -152,6 +162,9 @@ parseSecondary = parsePrimary <.> (parseAdd <|> parseSub)
 
 parseTertiary :: Parser Expr
 parseTertiary = parseSecondary <.> (parseMul <|> parseDiv)
+
+-- parseQuaternary :: Parser Expr
+-- parseQuaternary = parseTertiary <.> paseFuncCall
 
 parseExpr :: Parser Expr
 parseExpr = parseTertiary
