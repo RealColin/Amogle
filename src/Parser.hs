@@ -43,6 +43,12 @@ satisfyToken fn = Parser $ \case
 eatToken :: Token -> Parser Token
 eatToken t = satisfyToken (== t)
 
+many :: Parser a -> Parser [a]
+many p = (do
+  x <- p
+  xs <- many p
+  return (x : xs)) <|> pure []
+
 (<|>) :: Parser a -> Parser a -> Parser a
 p1 <|> p2 = Parser $ \input ->
   case runParser p1 input of
@@ -60,6 +66,18 @@ p <.> op = do
       y <- p
       rest (f acc y))
       <|> return acc
+
+(|-|) :: Parser a -> Parser s -> Parser [a]
+p |-| sep = joe []
+  where
+    joe rest = (do
+      next <- p
+      _ <- sep
+      joe (next:rest)
+      ) <|> (do
+        next <- p
+        pure $ reverse (next:rest)
+      )
 
 -- Defining AST types     
 
@@ -98,16 +116,9 @@ parseParams = parseParen <|> pure []
   where
     parseParen = do
       _ <- eatToken TokenParenL
-      params <- parseNames [] <|> pure []
+      params <- parseValName |-| eatToken TokenComma
       _ <- eatToken TokenParenR
       pure params
-
-    parseNames rest = (do
-      next <- parseValName
-      _ <- eatToken TokenComma
-      parseNames (next:rest)) <|> (do
-        next <- parseValName
-        pure $ reverse (next:rest))
   
 parseAdd :: Parser (Expr -> Expr -> Expr)
 parseAdd = eatToken TokenPlus >> pure Add
@@ -149,10 +160,13 @@ parseValDef = do
 parseDecl :: Parser Decl
 parseDecl = parseValDef
 
+parseDecls :: Parser [Decl]
+parseDecls = parseDecl |-| many (eatToken TokenNL)
+
 -- Main parse function
 
-parse :: [Token] -> Maybe Decl
-parse tokens = case runParser parseDecl tokens of
+parse :: [Token] -> Maybe [Decl]
+parse tokens = case runParser parseDecls tokens of
   Nothing -> Nothing
   Just (a, _) -> Just a
   

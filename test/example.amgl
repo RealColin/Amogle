@@ -1,2 +1,1 @@
-// functions
-
+let f(x) = x + 2 let g = 3
