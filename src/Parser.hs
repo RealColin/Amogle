@@ -93,12 +93,6 @@ parseInt = Parser $ \case
     (TokenInt t:rest) -> Just (t, rest)
     _ -> Nothing
 
-parsePrimary :: Parser Expr
-parsePrimary = i <|> e
-  where
-    i = IntLit <$> parseInt
-    e = Ident <$> parseValName
-
 parseAdd :: Parser (Expr -> Expr -> Expr)
 parseAdd = eatToken TokenPlus >> pure Add
 
@@ -111,17 +105,20 @@ parseMul = eatToken TokenTimes >> pure Mul
 parseDiv :: Parser (Expr -> Expr -> Expr)
 parseDiv = eatToken TokenDivide >> pure Div
 
-parseBottomLevel :: Parser Expr
-parseBottomLevel = parsePrimary
+parsePrimary :: Parser Expr
+parsePrimary = i <|> e
+  where
+    i = IntLit <$> parseInt
+    e = Ident <$> parseValName
 
-parseMidLevel :: Parser Expr
-parseMidLevel = parseBottomLevel <.> (parseMul <|> parseDiv)
+parseSecondary :: Parser Expr
+parseSecondary = parsePrimary <.> (parseAdd <|> parseSub)
 
-parseTopLevel :: Parser Expr
-parseTopLevel = parseMidLevel <.> (parseAdd <|> parseSub)
+parseTertiary :: Parser Expr
+parseTertiary = parseSecondary <.> (parseMul <|> parseDiv)
 
 parseExpr :: Parser Expr
-parseExpr = parseTopLevel
+parseExpr = parseTertiary
 
 -- Declaration Parsing Functions
     
