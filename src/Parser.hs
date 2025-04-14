@@ -2,6 +2,7 @@
 
 module Parser (parse) where
 
+import Control.Applicative (Alternative(..))
 import Lexer (Token(..))
 
 -- Defining the Parser
@@ -26,12 +27,20 @@ instance Applicative Parser where
           Nothing -> Nothing
           Just (a, rest') -> Just(f a, rest'))
 
+instance Alternative Parser where
+  empty = Parser $ const Nothing
+  pa <|> pb = Parser $ \input ->
+    case runParser pa input of
+      Nothing -> runParser pb input
+      res -> res
+
 instance Monad Parser where
   return = pure
   pa >>= fapb = Parser (\input ->
     case runParser pa input of
       Nothing -> Nothing
       Just (x, rest) -> runParser (fapb x) rest)
+
 
 -- Basic Parser Functions
 
@@ -43,17 +52,10 @@ satisfyToken fn = Parser $ \case
 eatToken :: Token -> Parser Token
 eatToken t = satisfyToken (== t)
 
-many :: Parser a -> Parser [a]
-many p = (do
-  x <- p
-  xs <- many p
-  return (x : xs)) <|> pure []
-
-(<|>) :: Parser a -> Parser a -> Parser a
-p1 <|> p2 = Parser $ \input ->
-  case runParser p1 input of
-    Nothing -> runParser p2 input
-    res -> res
+eof :: Parser ()
+eof = Parser $ \case
+  [] -> Just ((), [])
+  _ -> Nothing
 
 -- chainl1 function
 (<.>) :: Parser a -> Parser (a -> a -> a) -> Parser a
@@ -161,12 +163,21 @@ parseDecl :: Parser Decl
 parseDecl = parseValDef
 
 parseDecls :: Parser [Decl]
-parseDecls = parseDecl |-| many (eatToken TokenNL)
+parseDecls = parseDecl |-| some (eatToken TokenNL)
 
 -- Main parse function
 
+parseProg :: Parser [Decl]
+parseProg = do
+  decls <- parseDecls
+  _ <- many (eatToken TokenNL)
+  _ <- eof
+  pure decls
+
 parse :: [Token] -> Maybe [Decl]
-parse tokens = case runParser parseDecls tokens of
+parse tokens = case runParser parseProg tokens of
   Nothing -> Nothing
-  Just (a, _) -> Just a
-  
+  Just (a, rest) ->
+    if null rest
+      then Just a
+      else error ("Un-eaten tokens: " ++ show rest)
