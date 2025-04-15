@@ -163,9 +163,6 @@ parseSecondary = parsePrimary <.> (parseAdd <|> parseSub)
 parseTertiary :: Parser Expr
 parseTertiary = parseSecondary <.> (parseMul <|> parseDiv)
 
--- parseQuaternary :: Parser Expr
--- parseQuaternary = parseTertiary <.> paseFuncCall
-
 parseExpr :: Parser Expr
 parseExpr = parseTertiary
 

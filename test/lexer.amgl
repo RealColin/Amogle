@@ -1,0 +1,12 @@
+tokenize: String -> [Token]
+let tokenize(input) match
+	("") = []
+	(' ' | rest) = tokenize(rest)
+	('\t' | rest) = TokenIdent | tokenize(rest)
+	('\n' | rest) = TokenNL | tokenize(rest)
+	('-' | '>' | rest) = TokenArrow | tokenize(rest)
+	(character | rest) = getToken(chunk) | tokenize(remaining)
+		where (chunk, remaining) guard
+			isAlpha(character) = takeChunk(character | rest)
+			isNumber(character) = takeNumChunk(character | rest)
+			otherwise = ([character], rest)
