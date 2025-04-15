@@ -90,6 +90,7 @@ type TypeName = String
 data Expr
   = IntLit Int
   | DoubleLit Double
+  | StringLit String
   | Add Expr Expr
   | Sub Expr Expr
   | Ident String
@@ -119,6 +120,11 @@ parseTypeName = Parser $ \case
 parseInt :: Parser Int
 parseInt = Parser $ \case
   (TokenInt t:rest) -> Just (t, rest)
+  _ -> Nothing
+
+parseString :: Parser String
+parseString = Parser $ \case
+  (TokenString t:rest) -> Just (t, rest)
   _ -> Nothing
 
 parseParams :: Parser Params
@@ -151,11 +157,12 @@ parseFuncCall = do
   pure $ Call (Ident name) exprs
 
 parsePrimary :: Parser Expr
-parsePrimary = i <|> f <|> e
+parsePrimary = i <|> f <|> e <|> s
   where
     i = IntLit <$> parseInt
     f = parseFuncCall
     e = Ident <$> parseValName
+    s = StringLit <$> parseString
 
 parseSecondary :: Parser Expr
 parseSecondary = parsePrimary <.> (parseAdd <|> parseSub)

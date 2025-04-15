@@ -7,6 +7,7 @@ main :: IO ()
 main = do
   contents <- readFile "test/example.amgl"
   let tokens = tokenize contents
+  -- print tokens
   let ast = parse tokens
   case ast of
     Nothing -> print "Parse error somewhere"

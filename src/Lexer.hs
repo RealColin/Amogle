@@ -19,6 +19,7 @@ data Token =
   | TokenArrow
   | TokenInt Int
   | TokenDouble Double
+  | TokenString String
   | TokenNL
   | TokenIndent
   | TokenUnknown
@@ -35,6 +36,7 @@ tokenize (c:s) = getToken chunk : tokenize rest
     (chunk, rest)
       | isAlpha c = takeChunk (c:s)
       | isNumber c = takeNumChunk (c:s)
+      | c == '\"' = takeStringLit (c:s) 0
       | otherwise = ([c], s)
 
 takeChunk :: String -> (String, String)
@@ -52,6 +54,13 @@ takeNumChunk (c:s)
   | otherwise = ([], c:s)
     where (chunk, rest) = takeNumChunk s    
 
+takeStringLit :: String -> Int -> (String, String)
+takeStringLit [] _ = ([], [])
+takeStringLit ('\"':s) 1 = (['\"'], s)
+takeStringLit (c:s) _
+  | otherwise = (c:chunk, rest)
+    where (chunk, rest) = takeStringLit s 1
+
 getToken :: String -> Token
 getToken "let" = TokenLet
 getToken "=" = TokenEquals
@@ -68,5 +77,6 @@ getToken str
   | Just d <- readMaybe str :: Maybe Double = TokenDouble d
   | isUpper c = TokenTypeIdent str
   | isLower c = TokenValIdent str
+  | c == '\"' = TokenString str
   | otherwise = TokenUnknown
     where c = head str
