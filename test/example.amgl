@@ -1,6 +1,10 @@
 f: Int, Int -> Int
 let f(x, y) = x * y + x
 
+a: Int, Int -> Int
+let a(x, y) = x + x * y
+
+
 g: Int -> Int
 let g(x) = f(x + 1, x - 2) + 3
 

@@ -165,10 +165,10 @@ parsePrimary = i <|> f <|> e <|> s
     s = StringLit <$> parseString
 
 parseSecondary :: Parser Expr
-parseSecondary = parsePrimary <.> (parseAdd <|> parseSub)
+parseSecondary = parsePrimary <.> (parseMul <|> parseDiv)
 
 parseTertiary :: Parser Expr
-parseTertiary = parseSecondary <.> (parseMul <|> parseDiv)
+parseTertiary = parseSecondary <.> (parseAdd <|> parseSub)
 
 parseExpr :: Parser Expr
 parseExpr = parseTertiary
